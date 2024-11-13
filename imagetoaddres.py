@@ -93,24 +93,26 @@ try:
 
     generation_response = complete_json_string(generation_response)
 
-    # Attempt to parse JSON
-    try:
-        response_data = json.loads(generation_response)
-        print("Parsed JSON:", response_data)
-    except json.JSONDecodeError as e:
-        print("JSON parsing error:", e)
-        print("Faulty JSON response:", generation_response)
+    print('Json Output',generation_response)
 
-    # Deduplication logic if necessary
-    unique_data = {}
-    for entry in response_data:
-        poi_name = entry.get("poi_name")
-        if poi_name not in unique_data:
-            unique_data[poi_name] = entry
+    # # Attempt to parse JSON
+    # try:
+    #     response_data = json.loads(generation_response)
+    #     print("Parsed JSON:", response_data)
+    # except json.JSONDecodeError as e:
+    #     print("JSON parsing error:", e)
+    #     print("Faulty JSON response:", generation_response)
 
-    # Convert deduplicated data back to a list
-    unique_response_data = list(unique_data.values())
-    print("Final JSON data:", json.dumps(unique_response_data, indent=2))
+    # # Deduplication logic if necessary
+    # unique_data = {}
+    # for entry in response_data:
+    #     poi_name = entry.get("poi_name")
+    #     if poi_name not in unique_data:
+    #         unique_data[poi_name] = entry
+
+    # # Convert deduplicated data back to a list
+    # unique_response_data = list(unique_data.values())
+    # print("Final JSON data:", json.dumps(unique_response_data, indent=2))
 
 except client.exceptions.ValidationException as e:
     print("Validation error:", e)
