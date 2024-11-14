@@ -22,7 +22,7 @@ def complete_json_string(response: str) -> str:
         response = "[" + response
     return response
 
-image_path = r'D:\BITS M.Tech\Desertation\Streetview\Capture3.PNG'
+image_path = r'images/Capture1.PNG'
 with Image.open(image_path) as img:
     img = img.resize((1024, 1024))
     byte_array = io.BytesIO()
@@ -33,31 +33,32 @@ with Image.open(image_path) as img:
 
 
 promt = '''
-Analyze the provided image to detect all visible signboards. For each detected signboard, extract the following details:
-POI Name: The name or title of the Point of Interest (POI) on the signboard.
-Address: Any visible The full address visible on the signboard, including street, locality, city, and postal code if available.
-Email: Any visible email address
-Phone 1: Any visible Primary phone numbers
-Phone 2: Any visible Secondary phone numbers 
-Website: Any visible website URL.
-Detect multiple signboards in the image and structure the extracted details for each signboard in a direct JSON response, with each JSON object formatted as follows:
+Analyze the provided image to detect all visible signboards. For each detected signboard, strictly extract only the following details if visibly present on the signboard:
+- POI Name: The name or title of the Point of Interest (POI) on the signboard.
+- Address: The full address, including street, locality, city, and postal code, if available on the signboard.
+- Email: Any visible email address
+- Phone 1: Primary phone number, if visible
+- Phone 2: Secondary phone number, if visible
+- Website: Website URL, if visible
+
+Detect multiple signboards in the image and structure the extracted details for each signboard in a JSON response. If a detail is not visible on a signboard, leave it as an empty string. Below is a JSON object formatted as follows:
 {
   "signboard_id": 1,
   "poi_name": "POI Name",
-  "address": "Street,Sublocality,Locality, City, Postal Code",
+  "address": "Street, Sublocality, Locality, City, Postal Code",
   "email": "email@example.com",
   "phone_1": "+123456789",
-  "phone_2": "+987654321",
+  "phone_2": "",
   "website": "https://www.example.com"
 }
 
 Return only the direct JSON response without any explanations.
 '''
-max_gen_len = 2048
+max_gen_len = 1024
 
 temperature = 0.5
 
-top_p = 0.9
+top_p = 1
 
 
 # Prepare the payload for the request to Amazon Bedrock
@@ -87,13 +88,49 @@ try:
     # Print the response
     response_body = json.loads(response['body'].read().decode('utf-8'))
     # print("Response:", response_body)
-    print("Response:", response_body['generation'])
-    print("Type:", type(response_body['generation']))
+    # print("Response:", response_body['generation'])
+    # print("Type:", type(response_body['generation']))
     generation_response = response_body['generation']
 
-    generation_response = complete_json_string(generation_response)
+    # generation_response = complete_json_string(generation_response)
 
     print('Json Output',generation_response)
+    print('break')
+    # print('Json Output type ',type(generation_response))
+
+    # json_match = re.search(r'\[.*\]', generation_response, re.DOTALL)
+
+    json_match = re.search(r"```json\s*(\[[\s\S]*?\])\s*```", generation_response)
+
+    if json_match: 
+        json_data = json_match.group(1) # Extract the JSON string within the markers 
+        try: 
+            signboards = json.loads(json_data)
+            # Output the parsed JSON in a well-structured format
+            print(json.dumps(signboards, indent=2))
+            print("successful to decode JSON1.")
+        except json.JSONDecodeError:
+            print("Failed to decode JSON.")
+    elif generation_response.strip().startswith('[') and generation_response.strip().endswith(']'):
+        try:
+            signboards = json.loads(generation_response.strip())  # Parse the raw JSON directly
+            # print("Json Output:", json.dumps(signboards, indent=2))  # Output the parsed JSON in a well-structured format
+            print("successful to decode JSON2.")
+        except json.JSONDecodeError:
+            print("Failed to decode JSON.")
+    else: 
+        print("No JSON data found.")
+
+    # if json_match:
+    #     json_content = json_match.group(0)
+    #     try:
+    #         # Parse the extracted JSON content
+    #         json_output = json.loads(json_content)
+    #         print(json_output)  # This will be a properly formatted dictionary/list
+    #     except json.JSONDecodeError as e:
+    #         print("Failed to parse JSON:", e)
+    # else:
+    #     print("No JSON content found in the output.")
 
     # # Attempt to parse JSON
     # try:
