@@ -22,7 +22,7 @@ def complete_json_string(response: str) -> str:
         response = "[" + response
     return response
 
-image_path = r'images/Capture1.PNG'
+image_path = r'images/Capture6.PNG'
 with Image.open(image_path) as img:
     img = img.resize((1024, 1024))
     byte_array = io.BytesIO()
@@ -33,30 +33,32 @@ with Image.open(image_path) as img:
 
 
 promt = '''
-Analyze the provided image to detect all visible signboards. For each detected signboard, strictly extract only the following details if visibly present on the signboard:
-- POI Name: The name or title of the Point of Interest (POI) on the signboard.
-- Address: The full address, including street, locality, city, and postal code, if available on the signboard.
-- Email: Any visible email address
-- Phone 1: Primary phone number, if visible
-- Phone 2: Secondary phone number, if visible
-- Website: Website URL, if visible
+Analyze the provided image to detect all visible commercial or public facility signboards that explicitly represent a Point of Interest (POI), such as a business, landmark, or organization. Exclude any traffic, directional, cautionary, or regulatory signs (e.g., 'STOP,' 'SLOW DOWN,' 'YIELD,' 'NO PARKING'). For each detected POI signboard, strictly extract only the following details if visibly present:
 
-Detect multiple signboards in the image and structure the extracted details for each signboard in a JSON response. If a detail is not visible on a signboard, leave it as an empty string. Below is a JSON object formatted as follows:
+    POI Name: The name or title of the Point of Interest (POI) on the signboard (e.g., a business or place name).
+    Address: The full address, including street, locality, city, and postal code, if available.
+    Email: Any visible email address.
+    Phone 1: Primary phone number, if visible.
+    Phone 2: Secondary phone number, if visible.
+    Website: Website URL, if visible.
+
+Structure the extracted details for each relevant POI signboard in a JSON response. If a detail is not visible on a signboard, leave it as an empty string. If a phone number is blurred or partially visible, leave it as an empty string rather than making assumptions. Below is a JSON object formatted as follows:
+
 {
   "signboard_id": 1,
   "poi_name": "POI Name",
   "address": "Street, Sublocality, Locality, City, Postal Code",
   "email": "email@example.com",
-  "phone_1": "+123456789",
+  "phone_1": "",
   "phone_2": "",
   "website": "https://www.example.com"
 }
 
-Return only the direct JSON response without any explanations.
+Return only the JSON response without explanations, ignoring any detected signboards that do not represent a POI.
 '''
 max_gen_len = 1024
 
-temperature = 0.5
+temperature = 0
 
 top_p = 1
 
@@ -101,6 +103,26 @@ try:
     # json_match = re.search(r'\[.*\]', generation_response, re.DOTALL)
 
     json_match = re.search(r"```json\s*(\[[\s\S]*?\])\s*```", generation_response)
+    pattern = r'''
+        \[
+        \s*(\{
+        \s*"signboard_id":\s*\d+,\s*
+        "poi_name":\s*"[^"]*",\s*
+        "address":\s*"[^"]*",\s*
+        "email":\s*"[^"]*",\s*
+        "phone_1":\s*"[^"]*",\s*
+        "phone_2":\s*"[^"]*",\s*
+        "website":\s*"[^"]*"\s*\}
+        (?:,\s*\{
+        \s*"signboard_id":\s*\d+,\s*
+        "poi_name":\s*"[^"]*",\s*
+        "address":\s*"[^"]*",\s*
+        "email":\s*"[^"]*",\s*
+        "phone_1":\s*"[^"]*",\s*
+        "phone_2":\s*"[^"]*",\s*
+        "website":\s*"[^"]*"\s*\})*
+        \s*\]
+        '''
 
     if json_match: 
         json_data = json_match.group(1) # Extract the JSON string within the markers 
@@ -111,13 +133,15 @@ try:
             print("successful to decode JSON1.")
         except json.JSONDecodeError:
             print("Failed to decode JSON.")
-    elif generation_response.strip().startswith('[') and generation_response.strip().endswith(']'):
-        try:
-            signboards = json.loads(generation_response.strip())  # Parse the raw JSON directly
-            # print("Json Output:", json.dumps(signboards, indent=2))  # Output the parsed JSON in a well-structured format
-            print("successful to decode JSON2.")
-        except json.JSONDecodeError:
-            print("Failed to decode JSON.")
+    # elif generation_response.strip().startswith('[') and generation_response.strip().endswith(']'):
+    #     try:
+    #         signboards = json.loads(generation_response.strip())  # Parse the raw JSON directly
+    #         # print("Json Output:", json.dumps(signboards, indent=2))  # Output the parsed JSON in a well-structured format
+    #         print("successful to decode JSON2.")
+    #     except json.JSONDecodeError:
+    #         print("Failed to decode JSON.")
+    elif re.search(pattern, generation_response, re.VERBOSE):
+        print("successful to decode JSON2.")
     else: 
         print("No JSON data found.")
 

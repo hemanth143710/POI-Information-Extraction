@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Techniques for Signboard Detection</title>
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f9fc;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            padding: 20px 0;
+            text-align: center;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            font-size: 2.8rem;
+            margin: 10px 0;
+            animation: fadeIn 1.5s ease-in-out;
+        }
+
+        header p {
+            font-size: 1.4rem;
+            margin: 0;
+        }
+
+        /* Container Styles */
+        .container {
+            width: 85%;
+            margin: 30px auto;
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            animation: slideIn 2s ease-out;
+        }
+
+        .form-container, .address-container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Form and Button Styles */
+        .form-container input[type="file"], .address-container input[type="text"] {
+            padding: 12px;
+            margin-bottom: 20px;
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .form-container input[type="file"]:focus, .address-container input[type="text"]:focus {
+            border-color: #57c7f2;
+        }
+
+        .form-container button, .address-container button {
+            background-color: #ff6f61;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+
+        .form-container button:hover, .address-container button:hover {
+            background-color: #ff5733;
+        }
+
+        /* Response Container Styles */
+        .response-container-signboard, .response-container-address {
+            background-color: #f1f1f1;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: none; /* Initially hidden */
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .response-container-signboard {
+            width: 70%; /* 70% width */
+            animation: fadeInLeft 1s ease-out;
+        }
+
+        .response-container-address {
+            width: 30%; /* 30% width */
+            animation: fadeInRight 1s ease-out;
+        }
+
+        .response-container-signboard:hover, .response-container-address:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .response-container h3 {
+            color: #333;
+            text-align: center;
+        }
+
+        .response-container pre {
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            color: #333;
+        }
+
+        /* Loading Overlay */
+        #loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideIn {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeInLeft {
+            0% {
+                opacity: 0;
+                transform: translateX(-50%);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeInRight {
+            0% {
+                opacity: 0;
+                transform: translateX(50%);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Advanced Techniques for Signboard Detection and ROI Refinement</h1>
+    <p>To Improve POI Information Extraction</p>
+</header>
+
+<div class="container">
+    <!-- Image Upload Form -->
+    <div class="form-container">
+        <div class="section-title">
+            <h2>Upload Image for Signboard Detection</h2>
+        </div>
+        <form id="uploadForm">
+            <label for="file-upload">Select an image file to upload:</label>
+            <input type="file" id="file-upload" name="file" accept="image/*" required>
+            <br>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+
+    <!-- Address Parser Form -->
+    <div class="address-container">
+        <div class="section-title">
+            <h2>Enter Address for Parsing</h2>
+        </div>
+        <form id="addressForm">
+            <label for="address-input">Enter an address:</label>
+            <input type="text" id="address-input" name="address" placeholder="e.g., Hyderabad" required>
+            <br>
+            <button type="submit">Parse Address</button>
+        </form>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Response Containers -->
+    <div class="response-container-signboard" id="response-container-signboard">
+        <h3>Signboard Detection Response:</h3>
+        <pre id="response-output-signboard"></pre>
+    </div>
+
+    <div class="response-container-address" id="response-container-address">
+        <h3>Address Parsing Response:</h3>
+        <pre id="response-output-address"></pre>
+    </div>
+</div>
+
+<div id="loading-overlay">
+    <img src="/static/loading-gif.gif" alt="Loading...">
+</div>
+
+<script>
+    const form = document.getElementById('uploadForm');
+    const addressForm = document.getElementById('addressForm');
+    
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        document.getElementById('loading-overlay').style.display = 'flex';
+        const formData = new FormData();
+        formData.append('image', document.getElementById('file-upload').files[0]);
+
+        try {
+            const response = await fetch('http://127.0.0.1:8000/detect-signboards', {
+                method: 'POST',
+                body: formData,
+            });
+            const result = await response.json();
+            displayResponse('signboard', result);
+        } catch (error) {
+            displayResponse('signboard', `Error: ${error.message}`);
+        } finally {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+    });
+
+    addressForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const address = document.getElementById('address-input').value;
+    document.getElementById('loading-overlay').style.display = 'flex';
+
+        try {
+            // Including the address in the URL query parameters
+            const response = await fetch(`http://127.0.0.1:8000/parse-address?address_string=${encodeURIComponent(address)}`, {
+                method: 'POST',
+            });
+            const result = await response.json();
+            displayResponse('address', result);
+        } catch (error) {
+            displayResponse('address', `Error: ${error.message}`);
+        } finally {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+    });
+
+    function displayResponse(type, result) {
+        const responseContainer = type === 'signboard' ? document.getElementById('response-container-signboard') : document.getElementById('response-container-address');
+        const outputElement = type === 'signboard' ? document.getElementById('response-output-signboard') : document.getElementById('response-output-address');
+        responseContainer.style.display = 'block';
+        outputElement.textContent = JSON.stringify(result, null, 2);
+    }
+</script>
+
+</body>
+</html>

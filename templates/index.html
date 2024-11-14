@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Techniques for Signboard Detection</title>
+    <style>
+       body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7fc;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            background-image: url('https://i0.wp.com/geographicbook.com/wp-content/uploads/2023/02/banner-jpg.webp?fit=1024%2C576&ssl=1');
+            background-size: cover; /* Ensure image fully covers the screen */
+            background-position: center; /* Center the background */
+            background-repeat: no-repeat; /* Prevent the image from repeating */
+            background-attachment: fixed; /* Fix the background image in place */
+            transition: background-image 0.5s ease-in-out; /* Smooth transition for background change */
+        }
+
+
+        header {
+            background-color: rgba(0, 0, 0, 0.7); /* Dark overlay for contrast */
+            padding: 20px;
+            text-align: center;
+            color: white;
+        }
+        h1 {
+            font-size: 2rem;
+            margin: 10px 0;
+        }
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+        }
+        .form-container, .address-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .form-container {
+            flex: 7; /* 70% of the width */
+            border-left: 4px solid #ff6600; /* Added left border with orange */
+        }
+        .address-container {
+            flex: 3; /* 30% of the width */
+            border-left: 4px solid #ff9900; /* Added left border with golden yellow */
+        }
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #0066cc; /* Changed to blue */
+        }
+        .form-container input[type="file"], .address-container input[type="text"] {
+            padding: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .form-container button, .address-container button {
+            background-color: #ff6600; /* Changed to orange */
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .form-container button:hover, .address-container button:hover {
+            background-color: #cc5200; /* Darker orange */
+        }
+        .response-container {
+            background-color: #f1f1f1;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            margin-top: 20px;
+        }
+        .response-container h3 {
+            color: #333;
+            text-align: center;
+        }
+        .response-container pre {
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        #loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden; /* Prevent scrolling when overlay is visible */
+        }
+
+        /* Additional style for separate response containers */
+        .response-container-signboard {
+            width: 70%;
+            float: left;
+            margin-right: 20px;
+        }
+        .response-container-address {
+            width: 30%;
+            float: left;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h3>Advanced Techniques for Signboard Detection and ROI Refinement</h3>
+    <h1>To Improve POI Information Extraction</h1>
+</header>
+
+<div class="container">
+    <!-- Image Upload Form -->
+    <div class="form-container">
+        <div class="section-title">
+            <h2>Upload Image for POI Information Extraction</h2>
+        </div>
+        <form id="uploadForm">
+            <label for="file-upload">Select an image file to upload:</label>
+            <input type="file" id="file-upload" name="file" accept="image/*" required>
+            <br>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+
+    <!-- Address Parser Form -->
+    <div class="address-container">
+        <div class="section-title">
+            <h2>Enter Address for Parsing</h2>
+        </div>
+        <form id="addressForm">
+            <label for="address-input">Enter an address:</label>
+            <input type="text" id="address-input" name="address" placeholder="e.g., Hyderabad" required>
+            <br>
+            <button type="submit">Parse Address</button>
+        </form>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Response Containers -->
+    <div class="response-container-signboard" id="response-container-signboard" style="display: none;">
+        <h3>POI Information Response:</h3>
+        <pre id="response-output-signboard"></pre>
+    </div>
+
+    <div class="response-container-address" id="response-container-address" style="display: none;">
+        <h3>Address Parsing Response:</h3>
+        <pre id="response-output-address"></pre>
+    </div>
+</div>
+
+<div id="loading-overlay">
+    <img src="/static/loading-gif.gif" alt="Loading...">
+</div>
+
+<script>
+    const form = document.getElementById('uploadForm');
+    const addressForm = document.getElementById('addressForm');
+    
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        document.getElementById('loading-overlay').style.display = 'flex';
+        const formData = new FormData();
+        formData.append('image', document.getElementById('file-upload').files[0]);
+
+        try {
+            const response = await fetch('http://127.0.0.1:8000/detect-signboards', {
+                method: 'POST',
+                body: formData,
+            });
+            const result = await response.json();
+            displayResponse('signboard', result);
+        } catch (error) {
+            displayResponse('signboard', `Error: ${error.message}`);
+        } finally {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+    });
+
+    addressForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const address = document.getElementById('address-input').value;
+        document.getElementById('loading-overlay').style.display = 'flex';
+
+        try {
+            // Including the address in the URL query parameters
+            const response = await fetch(`http://127.0.0.1:8000/parse-address?address_string=${encodeURIComponent(address)}`, {
+                method: 'POST',
+            });
+            const result = await response.json();
+            displayResponse('address', result);
+        } catch (error) {
+            displayResponse('address', `Error: ${error.message}`);
+        } finally {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+    });
+
+    function displayResponse(type, result) {
+        const responseContainerSignboard = document.getElementById('response-container-signboard');
+        const responseContainerAddress = document.getElementById('response-container-address');
+        const responseOutputSignboard = document.getElementById('response-output-signboard');
+        const responseOutputAddress = document.getElementById('response-output-address');
+        
+        if (type === 'signboard') {
+            responseOutputSignboard.textContent = JSON.stringify(result, null, 2);
+            responseContainerSignboard.style.display = 'block';
+        } else if (type === 'address') {
+            responseOutputAddress.textContent = JSON.stringify(result, null, 2);
+            responseContainerAddress.style.display = 'block';
+        }
+    }
+
+    // Change background image on scroll
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 0) {
+            document.body.style.backgroundImage = "url('https://wallpapercave.com/wp/wp6903417.jpg')";
+        } else {
+            document.body.style.backgroundImage = "url('https://i0.wp.com/geographicbook.com/wp-content/uploads/2023/02/banner-jpg.webp?fit=1024%2C576&ssl=1')";
+        }
+    });
+</script>
+
+</body>
+</html>
