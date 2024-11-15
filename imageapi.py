@@ -11,8 +11,16 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from starlette.requests import Request
+from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:8000","http://10.10.4.22:8000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # Initialize the Bedrock client
 client = boto3.client('bedrock-runtime', region_name='us-west-2')
 
@@ -25,22 +33,40 @@ class BedrockPayload(BaseModel):
 
 # Helper function to parse JSON response
 def parse_json_response(generation_response: str):
+    # print(generation_response)
+    # print('Break')
     json_match = re.search(r"```json\s*(\[[\s\S]*?\])\s*```", generation_response)
     json_match2 = re.search(r"(\[[\s\S]*?\])", generation_response)
+    json_match3 = re.search(r"```([\s\S]*?)```", generation_response)
     if json_match:
+        print('Match1')
         json_data = json_match.group(1)
         try:
             return json.loads(json_data)
         except json.JSONDecodeError:
-            raise ValueError("Failed to decode JSON.")
+            raise ValueError("Failed 1 to decode POI Information.")
     elif json_match2:
+        print('Match2')
         json_data2 = json_match2.group(1)
         try:
             return json.loads(json_data2)
         except json.JSONDecodeError:
-            raise ValueError("Failed to decode JSON2.")
+            raise ValueError("Failed 2 to decode POI Information.")
+    elif json_match3:
+        print('Match3')
+        json_data3 = json_match3.group(1)
+        
+        # Fix: Wrap the matched content in square brackets to create a valid JSON array
+        json_data3 = f"[{json_data3}]"
+        
+        try:
+            return json.loads(json_data3)
+        except json.JSONDecodeError:
+            raise ValueError("Failed 3 to decode POI Information.")
     else:
-        raise ValueError("No JSON data found.")
+        print(generation_response)
+        print('Break')
+        raise ValueError("Failed to decode POI Information.")
     
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -51,7 +77,6 @@ def invoke_model(client, model_id, address_string):
     Components to output:
     - H.no
     - Hname
-    - POI Name
     - Street
     - Locality
     - Sublocality
@@ -59,22 +84,19 @@ def invoke_model(client, model_id, address_string):
     - City
     - State
     - Pincode
-    - Category
     Address string: "{address_string}"
     Ensure that if a component is not present, the value should be "None". 
     Do not include any additional explanations or code. Just provide the JSON output.
     Output format example: {{
         "H.no": "value",
         "Hname": "value",
-        "POI Name": "value",
         "Street": "value",
         "Locality": "value",
         "Sublocality": "value",
         "Landmark": "value",
         "City": "value",
         "State": "value",
-        "Pincode": "value",
-        "Category": "value"
+        "Pincode": "value"
     }}
     """
     
@@ -112,6 +134,9 @@ templates = Jinja2Templates(directory="templates")
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request, "name": "Hemanth"})
 
+@app.get("/home", response_class=HTMLResponse)
+async def read_root(request: Request):
+    return templates.TemplateResponse("index8.html", {"request": request, "name": "Hemanth"})
 
 # Endpoint to process the uploaded image and detect signboards
 @app.post("/detect-signboards")
@@ -199,4 +224,4 @@ async def parse_address(address_string: str):
         raise HTTPException(status_code=500, detail=f"Error parsing address: {str(e)}")
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("imageapi:app", host="0.0.0.0", port=8000, reload=True)

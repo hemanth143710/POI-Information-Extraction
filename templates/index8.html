@@ -5,97 +5,93 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Advanced Techniques for Signboard Detection</title>
     <style>
-       body {
+        body {
             font-family: Arial, sans-serif;
             background-color: #f4f7fc;
             margin: 0;
             padding: 0;
             color: #333;
             background-image: url('https://i0.wp.com/geographicbook.com/wp-content/uploads/2023/02/banner-jpg.webp?fit=1024%2C576&ssl=1');
-            background-size: cover; /* Ensure image fully covers the screen */
-            background-position: center; /* Center the background */
-            background-repeat: no-repeat; /* Prevent the image from repeating */
-            background-attachment: fixed; /* Fix the background image in place */
-            transition: background-image 0.5s ease-in-out; /* Smooth transition for background change */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            transition: background-image 0.5s ease-in-out;
         }
 
-
         header {
-            background-color: rgba(0, 0, 0, 0.7); /* Dark overlay for contrast */
+            background-color: rgba(0, 0, 0, 0.7);
             padding: 20px;
             text-align: center;
             color: white;
         }
+
         h1 {
             font-size: 2rem;
             margin: 10px 0;
         }
+
         .container {
-            width: 80%;
+            display: flex;
+            width: 90%;
             margin: 0 auto;
             padding: 20px;
-            display: flex;
             gap: 20px;
         }
-        .form-container, .address-container {
+
+        .form-container {
+            flex: 7;
             background-color: white;
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        .form-container {
-            flex: 7; /* 70% of the width */
-            border-left: 4px solid #ff6600; /* Added left border with orange */
-        }
+
         .address-container {
-            flex: 3; /* 30% of the width */
-            border-left: 4px solid #ff9900; /* Added left border with golden yellow */
+            flex: 3;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
+
         .section-title {
             font-size: 1.5rem;
             margin-bottom: 20px;
             text-align: center;
-            color: #0066cc; /* Changed to blue */
+            color: #0066cc;
         }
-        .form-container input[type="file"], .address-container input[type="text"] {
+
+        input[type="file"], 
+        input[type="text"] {
             padding: 10px;
             margin-bottom: 20px;
             width: 100%;
             border-radius: 5px;
             border: 1px solid #ccc;
         }
-        .form-container button, .address-container button {
-            background-color: #ff6600; /* Changed to orange */
+
+        button {
+            background-color: #ff6600;
             color: white;
             padding: 10px 20px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             font-size: 1rem;
-        }
-        .form-container button:hover, .address-container button:hover {
-            background-color: #cc5200; /* Darker orange */
-        }
-        .response-container {
-            background-color: #f1f1f1;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             width: 100%;
-            margin-top: 20px;
         }
-        .response-container h3 {
-            color: #333;
-            text-align: center;
+
+        button:hover {
+            background-color: #cc5200;
         }
-        .response-container pre {
-            background-color: #fff;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            white-space: pre-wrap;
-            word-wrap: break-word;
+
+        #background-switcher {
+            margin: 20px auto;
+            display: flex;
+            justify-content: center;
         }
+
         #loading-overlay {
             display: none;
             position: fixed;
@@ -107,26 +103,18 @@
             z-index: 1000;
             align-items: center;
             justify-content: center;
-            overflow: hidden; /* Prevent scrolling when overlay is visible */
         }
 
-        /* Additional style for separate response containers */
-        .response-container-signboard {
-            width: 70%;
-            float: left;
-            margin-right: 20px;
-        }
-        .response-container-address {
-            width: 30%;
-            float: left;
-        }
-        .response-container-signboard h1,
-        .response-container-address h1 {
-            color: #ffd700; /* Gold */
-        }
-        .response-container-signboard pre,
-        .response-container-address pre {
-            font-size: 1.2rem; /* Adjust font size of text inside <pre> tags */
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .form-container, 
+            .address-container {
+                flex: 1;
+            }
         }
     </style>
 </head>
@@ -137,8 +125,11 @@
     <h1>To Improve POI Information Extraction</h1>
 </header>
 
+<div id="background-switcher">
+    <button id="toggle-background">Switch Background</button>
+</div>
+
 <div class="container">
-    <!-- Image Upload Form -->
     <div class="form-container">
         <div class="section-title">
             <h2>Upload Image for POI Information Extraction</h2>
@@ -146,12 +137,10 @@
         <form id="uploadForm">
             <label for="file-upload">Select an image file to upload:</label>
             <input type="file" id="file-upload" name="file" accept="image/*" required>
-            <br>
             <button type="submit">Submit</button>
         </form>
     </div>
 
-    <!-- Address Parser Form -->
     <div class="address-container">
         <div class="section-title">
             <h2>Enter Address for Parsing</h2>
@@ -159,22 +148,8 @@
         <form id="addressForm">
             <label for="address-input">Enter an address:</label>
             <input type="text" id="address-input" name="address" placeholder="e.g., Hyderabad" required>
-            <br>
             <button type="submit">Parse Address</button>
         </form>
-    </div>
-</div>
-
-<div class="container">
-    <!-- Response Containers -->
-    <div class="response-container-signboard" id="response-container-signboard" style="display: none;">
-        <h1>POI Information:</h1>
-        <pre id="response-output-signboard"></pre>
-    </div>
-
-    <div class="response-container-address" id="response-container-address" style="display: none;">
-        <h1>Parsed Address:</h1>
-        <pre id="response-output-address"></pre>
     </div>
 </div>
 
@@ -185,9 +160,23 @@
 <script>
     const form = document.getElementById('uploadForm');
     const addressForm = document.getElementById('addressForm');
-    const responseOutputSignboard = document.getElementById('response-output-signboard');
-    const responseOutputAddress = document.getElementById('response-output-address');
+    const toggleBackgroundButton = document.getElementById('toggle-background');
 
+    // Background Images
+    const backgrounds = [
+        'https://i0.wp.com/geographicbook.com/wp-content/uploads/2023/02/banner-jpg.webp?fit=1024%2C576&ssl=1',
+        'https://wallpaperaccess.com/full/2044887.jpg',
+        'https://images.unsplash.com/photo-1517694712202-14dd9538aa97',
+    ];
+    let currentBackgroundIndex = 0;
+
+    // Toggle Background Image
+    toggleBackgroundButton.addEventListener('click', () => {
+        currentBackgroundIndex = (currentBackgroundIndex + 1) % backgrounds.length;
+        document.body.style.backgroundImage = `url('${backgrounds[currentBackgroundIndex]}')`;
+    });
+
+    // Handle form submission
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
         document.getElementById('loading-overlay').style.display = 'flex';
@@ -200,9 +189,9 @@
                 body: formData,
             });
             const result = await response.json();
-            displayResponse('signboard', result);
+            alert(JSON.stringify(result, null, 2));
         } catch (error) {
-            displayResponse('signboard', `Error: ${error.message}`);
+            alert(`Error: ${error.message}`);
         } finally {
             document.getElementById('loading-overlay').style.display = 'none';
         }
@@ -218,49 +207,21 @@
                 method: 'POST',
             });
             const result = await response.json();
-            displayResponse('address', result);
+            alert(JSON.stringify(result, null, 2));
         } catch (error) {
-            displayResponse('address', `Error: ${error.message}`);
+            alert(`Error: ${error.message}`);
         } finally {
             document.getElementById('loading-overlay').style.display = 'none';
         }
     });
-
-    function displayResponse(type, result) {
-        const responseContainerSignboard = document.getElementById('response-container-signboard');
-        const responseContainerAddress = document.getElementById('response-container-address');
-
-        if (type === 'signboard') {
-            responseOutputSignboard.textContent = JSON.stringify(result, null, 2);
-            responseContainerSignboard.style.display = 'block';
-        } else if (type === 'address') {
-            responseOutputAddress.textContent = JSON.stringify(result, null, 2);
-            responseContainerAddress.style.display = 'block';
-        }
-
-        // Change text color based on background image
-        updateTextColor();
-    }
-
-    function updateTextColor() {
-        if (window.scrollY > 0) {
-            // Change text color to black for the second background image
-            responseOutputSignboard.style.color = "black";
-            responseOutputAddress.style.color = "black";
-        } else {
-            // Change text color to white for the first background image
-            responseOutputSignboard.style.color = "white";
-            responseOutputAddress.style.color = "white";
-        }
-    }
-    // Change background image and text color on scroll
     window.addEventListener('scroll', () => {
         if (window.scrollY > 0) {
+            // Change the background image when scrolling down
             document.body.style.backgroundImage = "url('https://wallpapercave.com/wp/wp6903417.jpg')";
         } else {
+            // Revert to the original background image when at the top
             document.body.style.backgroundImage = "url('https://i0.wp.com/geographicbook.com/wp-content/uploads/2023/02/banner-jpg.webp?fit=1024%2C576&ssl=1')";
         }
-        updateTextColor();
     });
 </script>
 
